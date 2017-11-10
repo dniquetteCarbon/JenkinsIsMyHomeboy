@@ -1,6 +1,7 @@
 import logging
 import time
 import os
+from copy import deepcopy
 from homeboy.messages.message_set_raw_values import MessageSetRawValues
 from homeboy import light_data
 
@@ -83,6 +84,19 @@ class HomeboyEffects():
         ldata.setAllColor(0,0,0)
         self.show(ldata)
 
+    def fade_led(self, fade_factor=4, ldata=light_data.LightData(), effect_time=2):
+        lights_org = deepcopy(ldata.lights)
+        for j in range(1, 40):
+            time.sleep(float(effect_time)/40)
+            fade = max(1,fade_factor * j)
+            for i in range(self.num_leds):
+                ldata.setPixelColor(i,
+                                    max(0,int(lights_org[i][0]-fade)),
+                                    max(0,int(lights_org[i][1]-fade)),
+                                    max(0,int(lights_org[i][2]-fade))
+                                    )
+            self.show(ldata)
+
     def flashing_effect(self, iterations=5):
         ldata = light_data.LightData()
         for _ in range(iterations):
@@ -90,12 +104,12 @@ class HomeboyEffects():
             for i in range(0, self.num_leds, 2):
                 ldata.setPixelColor(i, self.max_red, 0, 0)
             self.show(ldata)
-            time.sleep(1)
+            self.fade_led(ldata=ldata)
             ldata.setAllColor(0,0,0)
             for i in range(1, self.num_leds, 2):
                 ldata.setPixelColor(i,self.max_red, 0, 0)
             self.show(ldata)
-            time.sleep(1)
+            self.fade_led(ldata=ldata)
 
 
 
