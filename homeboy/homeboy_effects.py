@@ -1,10 +1,10 @@
 import logging
-from homeboy.homeboy_serial import HomeboySerial
+from homeboy import homeboy_serial
 
 
 class HomeboyEffects():
     def __init__(self):
-        self.homeboy_serial = HomeboySerial()
+        self.homeboy_serial = homeboy_serial.HomeboySerial()
         self.display_os = 'win'
 
     def write_serial_effect(self, method, data):
@@ -27,7 +27,7 @@ class HomeboyEffects():
     def show_failure_effect(self):
         logging.info('Displaying Failure')
         data_to_write = None
-        self.homeboy_serial.write_to_serial(data_to_write)
+        self.homeboy_serial.write_to_serial(homeboy_serial.RESULT_TYPE, data_to_write)
 
     def show_success_effect(self, data):
         logging.info('Displaying Success')
