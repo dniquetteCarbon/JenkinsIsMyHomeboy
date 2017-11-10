@@ -1,33 +1,27 @@
 import os
 import serial
+import time
 import logging
 
-
-# Header: 4 : 0xDE, 0xAD, 0xBE, x0EF
-# Message Type: 1
-# Message Data: X
-# Footer: 4 : 0xFE, 0xEB, 0xDA, 0xED
-
-RESULT_TYPE = 0
-EFFECT_TYPE = 1
-EFFECT_DATA_TYPE = 2
-
+LOG = logging.getLogger(__name__)
 
 class HomeboySerial():
-    def __init__(self):
-        self.baud_rate = 9600
-        self.port = os.environ.get('SERIAL_PORT')
-        logging.info("Connection Name: %s", self.serial_conn.name)
-
-    def write_to_serial(self, type, data):
+    def __init__(self, baud_rate=None, port=None):
         """
-        :param type: method type
-        :param data: method data
-        :return:
+        Creates an instance of s seri
+        :param baud_rate:
+        :param port:
         """
-        #build byte array
-        byte_data = data
+        self.baud_rate = baud_rate or 115200
+        self.port = port or os.environ.get('SERIAL_PORT')
+        LOG.info("Opening a Serial connection to %s at %s baud.", self.port, self.baud_rate)
+        self.serial_conn = serial.Serial(port=self.port, baudrate=self.baud_rate, timeout=0.5)
 
-        serial_conn = serial.Serial(port=self.port, baudrate=self.baud_rate)
-        serial_conn.write(byte_data)
-        serial_conn.close()
+    def write_to_serial(self, data):
+        """
+        :param data: bytearray with formatted header and footer to write to device
+        :return: None
+        """
+
+        self.serial_conn.write(data)
+        time.sleep(0.01)
