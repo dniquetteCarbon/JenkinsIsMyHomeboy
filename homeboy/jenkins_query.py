@@ -15,7 +15,7 @@ class JenkinsQuery():
 
     def get_latest_build(self, job_name):
         last_build_number = self.jenkins_server.get_job_info(job_name)['lastCompletedBuild']['number']
-        logging.info("%s Latest Build: %s",[job_name, last_build_number])
+        logging.info("%s Latest Build: %s", job_name, last_build_number)
 
         build_info = self.jenkins_server.get_build_info(job_name, last_build_number)
         return build_info
