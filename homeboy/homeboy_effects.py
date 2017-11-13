@@ -30,18 +30,37 @@ class HomeboyEffects():
         skip_leds = 0 if data['skip'] == 0 else round(max(1, float(data['skip'])/data['total'] * self.num_leds))
         pass_leds = self.num_leds - fail_leds - skip_leds
 
-        led_index = 0
-        for i in range(fail_leds):
-            ldata.setPixelColor(led_index, self.max_red, 0, self.blue_factor)
-            led_index += 1
-        for i in range(skip_leds):
-            ldata.setPixelColor(led_index, self.max_red, self.max_green, self.blue_factor)
-            led_index += 1
-        for i in range(pass_leds):
-            ldata.setPixelColor(led_index, 0, self.max_green, self.blue_factor)
-            led_index += 1
+        num_set_leds = 0
+        last_pixel = -1
+        for _ in range(fail_leds):
+            for pixel in reversed(range(num_set_leds, self.num_leds)):
+                ldata.setPixelColor(pixel, self.max_red, 0, self.blue_factor)
+                if last_pixel != -1 and last_pixel > num_set_leds:
+                    ldata.setPixelColor(last_pixel, 0,0,0)
+                last_pixel = pixel
+                self.show(ldata)
+                time.sleep(0.01)
+            num_set_leds += 1
 
-        self.show(ldata)
+        for _ in range(skip_leds):
+            for pixel in reversed(range(num_set_leds, self.num_leds)):
+                ldata.setPixelColor(pixel, self.max_red, self.max_green, self.blue_factor)
+                if last_pixel != -1 and last_pixel > num_set_leds:
+                    ldata.setPixelColor(last_pixel, 0,0,0)
+                last_pixel = pixel
+                self.show(ldata)
+                time.sleep(0.01)
+            num_set_leds += 1
+
+        for _ in range(pass_leds):
+            for pixel in reversed(range(num_set_leds, self.num_leds)):
+                ldata.setPixelColor(pixel, 0, self.max_green, self.blue_factor)
+                if last_pixel != -1 and last_pixel > num_set_leds:
+                    ldata.setPixelColor(last_pixel, 0,0,0)
+                last_pixel = pixel
+                self.show(ldata)
+                time.sleep(0.01)
+            num_set_leds += 1
 
     def show_result_effect(self, data):
         self.blue_factor = 3 if self.display_os == 'win' else 0
@@ -54,35 +73,47 @@ class HomeboyEffects():
             self.show_unstable_effect()
 
         # Sleep in between effects
-        time.sleep(5)
+        # time.sleep(5)
 
-        if data['result'].lower() == 'unstable':
+        if data['result'].lower() == 'unstable' or data['result'].lower() == 'success':
             self.create_donut(data)
 
 
     def show_failure_effect(self):
         logging.info('Displaying Failure')
         self.flashing_effect()
-        ldata = light_data.LightData()
-        ldata.setAllColor(self.max_red,0,self.blue_factor)
-        self.show(ldata)
 
     def show_success_effect(self):
         logging.info('Displaying Success')
         ldata = light_data.LightData()
-        ldata.setAllColor(0,self.max_green,self.blue_factor)
-        self.show(ldata)
+        self.pulsing_effect(iterations=5, time_=5, r=0, g=self.max_green, b=self.blue_factor)
 
     def show_unstable_effect(self):
         logging.info('Displaying Unstable')
-        self.flashing_effect()
+        self.pulsing_effect(iterations=5, time_=5, r=self.max_red, g=self.max_green, b=self.blue_factor)
         ldata = light_data.LightData()
-        ldata.setAllColor(self.max_red,self.max_green,self.blue_factor)
-        self.show(ldata)
 
-    def turn_off_all(self, ldata=light_data.LightData()):
-        ldata.setAllColor(0,0,0)
-        self.show(ldata)
+    def pulsing_effect(self, iterations=5, time_=5, r=255, g=255, b=255):
+        ldata = light_data.LightData()
+        time_per_iteration = time_ / iterations
+        steps_per_iteration = 50
+        time_per_step = time_per_iteration / steps_per_iteration
+        for _ in range(iterations):
+            # fade in
+            for i in range(int(steps_per_iteration / 2)):
+                ldata.setAllColor(int(float(r) * i / (steps_per_iteration / 2)),
+                                  int(float(g) * i / (steps_per_iteration / 2)),
+                                  int(float(b) * i / (steps_per_iteration / 2)))
+                self.show(ldata)
+                time.sleep(time_per_step)
+            # fade out
+            for i in reversed(range(int(steps_per_iteration / 2))):
+                ldata.setAllColor(int(float(r) * i / (steps_per_iteration / 2)),
+                                  int(float(g) * i / (steps_per_iteration / 2)),
+                                  int(float(b) * i / (steps_per_iteration / 2)))
+                self.show(ldata)
+                time.sleep(time_per_step)
+
 
     def fade_led(self, fade_factor=4, ldata=light_data.LightData(), effect_time=2):
         lights_org = deepcopy(ldata.lights)
